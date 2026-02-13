@@ -41,21 +41,48 @@ if ($providedUser !== $username ||
 
 // Get the endpoint from the query string
 $endpoint = isset($_GET['endpoint']) ? $_GET['endpoint'] : '';
+$range = isset($_GET['range']) ? strtolower((string)$_GET['range']) : '';
 
 // Base directory for CSV files
 $csvDir = 'monitor_data';
 
+function resolveRangeInSeconds($range) {
+    switch ($range) {
+        case '1d':
+            return 86400;
+        case '1w':
+            return 7 * 86400;
+        case '1m':
+            return 30 * 86400;
+        default:
+            return null;
+    }
+}
+
 // Function to read CSV and return as JSON
-function readCsvAsJson($csvFile) {
+function readCsvAsJson($csvFile, $range = null) {
     if (!file_exists($csvFile)) {
         return ['error' => 'No data available.'];
     }
+
     $data = [];
+    $rangeSeconds = resolveRangeInSeconds($range);
+    $minTimestamp = $rangeSeconds !== null ? (time() - $rangeSeconds) : null;
+
     $file = fopen($csvFile, 'r');
     $header = fgetcsv($file);
+
     while ($row = fgetcsv($file)) {
-        $data[] = array_combine($header, $row);
+        $entry = array_combine($header, $row);
+        if ($minTimestamp !== null && isset($entry['date'])) {
+            $entryTimestamp = strtotime((string)$entry['date']);
+            if ($entryTimestamp === false || $entryTimestamp < $minTimestamp) {
+                continue;
+            }
+        }
+        $data[] = $entry;
     }
+
     fclose($file);
     return $data;
 }
@@ -64,24 +91,24 @@ function readCsvAsJson($csvFile) {
 header('Content-Type: application/json');
 switch ($endpoint) {
     case 'cpu':
-        echo json_encode(readCsvAsJson("$csvDir/cpu_usage.csv"));
+        echo json_encode(readCsvAsJson("$csvDir/cpu_usage.csv", $range));
         break;
     case 'ram':
-        echo json_encode(readCsvAsJson("$csvDir/ram_usage.csv"));
+        echo json_encode(readCsvAsJson("$csvDir/ram_usage.csv", $range));
         break;
     case 'disk_usage':
-        echo json_encode(readCsvAsJson("$csvDir/disk_usage.csv"));
+        echo json_encode(readCsvAsJson("$csvDir/disk_usage.csv", $range));
         break;
     case 'disk_io':
         $disk = isset($_GET['disk']) ? $_GET['disk'] : 'sda';
-        echo json_encode(readCsvAsJson("$csvDir/disk_io_$disk.csv"));
+        echo json_encode(readCsvAsJson("$csvDir/disk_io_$disk.csv", $range));
         break;
     case 'bandwidth':
         $iface = isset($_GET['iface']) ? $_GET['iface'] : 'eth0';
-        echo json_encode(readCsvAsJson("$csvDir/bandwidth_$iface.csv"));
+        echo json_encode(readCsvAsJson("$csvDir/bandwidth_$iface.csv", $range));
         break;
     case 'apache_request_rate':
-        echo json_encode(readCsvAsJson("$csvDir/apache_request_rate.csv"));
+        echo json_encode(readCsvAsJson("$csvDir/apache_request_rate.csv", $range));
         break;
     default:
         echo json_encode(['error' => 'Invalid endpoint. Use: cpu, ram, disk_usage, disk_io, bandwidth, apache_request_rate']);

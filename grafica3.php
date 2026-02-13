@@ -170,6 +170,34 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
   const palette = ["#ED5D5F", "#E590B5", "#DAC7DC", "#E2DFD7"];
   let lastRawData = null;
 
+  function getCurrentRange() {
+    const selected = typeof window.metricDeckTimeRange === "string" ? window.metricDeckTimeRange : "1d";
+    return ["1d", "1w", "1m"].includes(selected) ? selected : "1d";
+  }
+
+  function buildDataUrlWithRange(baseUrl) {
+    const url = new URL(baseUrl, window.location.href);
+    url.searchParams.set("range", getCurrentRange());
+    return url.toString();
+  }
+
+  function formatLabelByRange(rawDate) {
+    const d = new Date(rawDate);
+    if (Number.isNaN(d.getTime())) return String(rawDate);
+
+    const range = getCurrentRange();
+    if (range === "1d") {
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    return d.toLocaleString([], {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
   function clearChart() {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
     if (legend) while (legend.firstChild) legend.removeChild(legend.firstChild);
@@ -451,7 +479,8 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
       const headers = {};
       if (auth) headers["Authorization"] = "Basic " + auth;
 
-      const res = await fetch(dataUrl, { headers, cache: "no-store" });
+      const requestUrl = buildDataUrlWithRange(dataUrl);
+      const res = await fetch(requestUrl, { headers, cache: "no-store" });
       if (!res.ok) return;
 
       const raw = await res.json();
@@ -464,10 +493,7 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
 
           let label = "";
           if (row.date) {
-            const d = new Date(row.date);
-            label = Number.isNaN(d.getTime())
-              ? String(row.date)
-              : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            label = formatLabelByRange(row.date);
           }
           if (!label) label = "Item " + (idx + 1);
 
@@ -496,5 +522,9 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
 
   loadAndRender();
   setInterval(loadAndRender, 10000);
+  document.addEventListener("metricdeck:range-changed", function () {
+    lastRawData = null;
+    loadAndRender();
+  });
 })();
 </script>

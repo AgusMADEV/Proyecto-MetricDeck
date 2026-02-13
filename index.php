@@ -99,6 +99,20 @@
       font-size: 12px;
       white-space: nowrap;
     }
+    .pill-select{
+      appearance: none;
+      border: 1px solid rgba(218,199,220,.90);
+      background: rgba(243,243,241,.9);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+    .pill-select:focus{
+      border-color: var(--accent2);
+    }
     .dot{
       width: 9px;
       height: 9px;
@@ -270,6 +284,14 @@
       <div class="topbar-right">
         <div class="pill"><span class="dot"></span> Live</div>
         <div class="pill">Auto-refresh: <b>10s</b></div>
+        <div class="pill">
+          Rango:
+          <select id="timeRangeSelect" class="pill-select" aria-label="Seleccionar rango de tiempo">
+            <option value="1d">1 día</option>
+            <option value="1w">1 semana</option>
+            <option value="1m">1 mes</option>
+          </select>
+        </div>
       </div>
     </div>
   </header>
@@ -339,5 +361,27 @@
       ?>
     </section>
   </main>
+
+  <script>
+    (function () {
+      const selector = document.getElementById("timeRangeSelect");
+      if (!selector) return;
+
+      const storageKey = "metricdeck_time_range";
+      const validRanges = new Set(["1d", "1w", "1m"]);
+      const savedRange = localStorage.getItem(storageKey);
+      const initialRange = validRanges.has(savedRange) ? savedRange : "1d";
+
+      selector.value = initialRange;
+      window.metricDeckTimeRange = initialRange;
+
+      selector.addEventListener("change", function () {
+        const selected = validRanges.has(selector.value) ? selector.value : "1d";
+        window.metricDeckTimeRange = selected;
+        localStorage.setItem(storageKey, selected);
+        document.dispatchEvent(new CustomEvent("metricdeck:range-changed", { detail: { range: selected } }));
+      });
+    })();
+  </script>
 </body>
 </html>
