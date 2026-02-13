@@ -42,6 +42,7 @@ if ($providedUser !== $username ||
 // Get the endpoint from the query string
 $endpoint = isset($_GET['endpoint']) ? $_GET['endpoint'] : '';
 $range = isset($_GET['range']) ? strtolower((string)$_GET['range']) : '';
+$period = isset($_GET['period']) ? strtolower((string)$_GET['period']) : 'current';
 
 // Base directory for CSV files
 $csvDir = 'monitor_data';
@@ -60,30 +61,63 @@ function resolveRangeInSeconds($range) {
 }
 
 // Function to read CSV and return as JSON
-function readCsvAsJson($csvFile, $range = null) {
+function readCsvAsJson($csvFile, $range = null, $period = 'current') {
     if (!file_exists($csvFile)) {
         return ['error' => 'No data available.'];
     }
 
     $data = [];
     $rangeSeconds = resolveRangeInSeconds($range);
-    $minTimestamp = $rangeSeconds !== null ? (time() - $rangeSeconds) : null;
+    $rows = [];
+    $maxTimestamp = null;
 
     $file = fopen($csvFile, 'r');
     $header = fgetcsv($file);
 
     while ($row = fgetcsv($file)) {
         $entry = array_combine($header, $row);
-        if ($minTimestamp !== null && isset($entry['date'])) {
+        $entryTimestamp = null;
+        if (isset($entry['date'])) {
             $entryTimestamp = strtotime((string)$entry['date']);
-            if ($entryTimestamp === false || $entryTimestamp < $minTimestamp) {
-                continue;
+            if ($entryTimestamp !== false) {
+                if ($maxTimestamp === null || $entryTimestamp > $maxTimestamp) {
+                    $maxTimestamp = $entryTimestamp;
+                }
+            } else {
+                $entryTimestamp = null;
             }
         }
-        $data[] = $entry;
+        $rows[] = ['entry' => $entry, 'timestamp' => $entryTimestamp];
     }
 
     fclose($file);
+
+    if ($rangeSeconds === null) {
+        foreach ($rows as $rowData) {
+            $data[] = $rowData['entry'];
+        }
+        return $data;
+    }
+
+    $anchor = $maxTimestamp ?? time();
+    $windowEnd = $anchor;
+    $windowStart = $anchor - $rangeSeconds;
+
+    if ($period === 'previous') {
+        $windowEnd = $anchor - $rangeSeconds;
+        $windowStart = $anchor - (2 * $rangeSeconds);
+    }
+
+    foreach ($rows as $rowData) {
+        $entryTimestamp = $rowData['timestamp'];
+        if ($entryTimestamp === null) {
+            continue;
+        }
+        if ($entryTimestamp >= $windowStart && $entryTimestamp <= $windowEnd) {
+            $data[] = $rowData['entry'];
+        }
+    }
+
     return $data;
 }
 
@@ -91,24 +125,24 @@ function readCsvAsJson($csvFile, $range = null) {
 header('Content-Type: application/json');
 switch ($endpoint) {
     case 'cpu':
-        echo json_encode(readCsvAsJson("$csvDir/cpu_usage.csv", $range));
+        echo json_encode(readCsvAsJson("$csvDir/cpu_usage.csv", $range, $period));
         break;
     case 'ram':
-        echo json_encode(readCsvAsJson("$csvDir/ram_usage.csv", $range));
+        echo json_encode(readCsvAsJson("$csvDir/ram_usage.csv", $range, $period));
         break;
     case 'disk_usage':
-        echo json_encode(readCsvAsJson("$csvDir/disk_usage.csv", $range));
+        echo json_encode(readCsvAsJson("$csvDir/disk_usage.csv", $range, $period));
         break;
     case 'disk_io':
         $disk = isset($_GET['disk']) ? $_GET['disk'] : 'sda';
-        echo json_encode(readCsvAsJson("$csvDir/disk_io_$disk.csv", $range));
+        echo json_encode(readCsvAsJson("$csvDir/disk_io_$disk.csv", $range, $period));
         break;
     case 'bandwidth':
         $iface = isset($_GET['iface']) ? $_GET['iface'] : 'eth0';
-        echo json_encode(readCsvAsJson("$csvDir/bandwidth_$iface.csv", $range));
+        echo json_encode(readCsvAsJson("$csvDir/bandwidth_$iface.csv", $range, $period));
         break;
     case 'apache_request_rate':
-        echo json_encode(readCsvAsJson("$csvDir/apache_request_rate.csv", $range));
+        echo json_encode(readCsvAsJson("$csvDir/apache_request_rate.csv", $range, $period));
         break;
     default:
         echo json_encode(['error' => 'Invalid endpoint. Use: cpu, ram, disk_usage, disk_io, bandwidth, apache_request_rate']);

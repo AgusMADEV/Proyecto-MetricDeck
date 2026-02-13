@@ -1,3 +1,8 @@
 .env
 monitor_data/
 auth_config.php
+/monitor_data
+/monitor_data
+/monitor_data
+*.csv
+random_monitor.py

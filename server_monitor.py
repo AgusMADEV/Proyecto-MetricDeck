@@ -37,9 +37,10 @@ def monitor_ram():
 def monitor_disk_io():
     disk_io_counters = psutil.disk_io_counters(perdisk=True)  # Fixed: Added this line
     for disk, io in disk_io_counters.items():
+        busy_time = getattr(io, 'busy_time', None)
         save_to_csv(f'disk_io_{disk}.csv',
                     ['date', 'read_bytes', 'write_bytes', 'read_ops', 'write_ops', 'read_time_ms', 'write_time_ms', 'busy_time_ms'],
-                    [datetime.now().strftime('%Y-%m-%d %H:%M:%S'), io.read_bytes, io.write_bytes, io.read_count, io.write_count, io.read_time, io.write_time, io.busy_time])
+                    [datetime.now().strftime('%Y-%m-%d %H:%M:%S'), io.read_bytes, io.write_bytes, io.read_count, io.write_count, io.read_time, io.write_time, busy_time])
 
 # --- Disk Usage Monitoring ---
 def monitor_disk_usage():
@@ -59,6 +60,8 @@ def monitor_bandwidth():
 # --- Apache2 Request Rate Monitoring ---
 def monitor_apache_request_rate():
     ACCESS_LOG = '/var/log/apache2/access.log'
+    if not os.path.exists(ACCESS_LOG):
+        return
     request_counts = {}
     current_time = datetime.now(timezone('UTC'))  # Make current_time timezone-aware
     time_window = timedelta(minutes=1)

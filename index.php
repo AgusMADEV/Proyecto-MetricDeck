@@ -246,6 +246,28 @@
       color: rgba(31,41,51,.85);
       font-weight: 600;
     }
+    .delta-badge{
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(218,199,220,.95);
+      background: rgba(243,243,241,.74);
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1;
+    }
+    .delta-up{
+      color: var(--accent2);
+      border-color: rgba(229,144,181,.35);
+      background: rgba(229,144,181,.16);
+    }
+    .delta-down{
+      color: var(--accent);
+      border-color: rgba(237,93,95,.35);
+      background: rgba(237,93,95,.16);
+    }
+    .delta-flat{
+      color: var(--muted);
+    }
 
     .card-body{
       position:relative;
@@ -349,7 +371,7 @@
               style="grid-column: span ' . $size['c'] . '; grid-row: span ' . $size['r'] . ';">
                 <div class="card-header">
                   <div class="label"><span class="mini"></span>' . htmlspecialchars($endpoint["label"]) . '</div>
-                  <div class="meta">' . htmlspecialchars($endpoint["type"]) . '</b></div>
+                  <div class="meta"><b>' . htmlspecialchars($endpoint["type"]) . '</b><span id="chart_' . $index . '_delta" class="delta-badge delta-flat">Δ --</span></div>
                 </div>
                 <div class="card-body">';
 

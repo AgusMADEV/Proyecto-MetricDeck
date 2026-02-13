@@ -155,6 +155,7 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
   const svgId      = <?php echo json_encode($svgId); ?>;
   const legendId   = <?php echo json_encode($legendId); ?>;
   const tooltipId  = <?php echo json_encode($tooltipId); ?>;
+  const baseId     = <?php echo json_encode($baseId); ?>;
   const showLegend = <?php echo $showLegend ? 'true' : 'false'; ?>;
   const chartType  = <?php echo json_encode($chartType); ?>;
   const dataUrl    = <?php echo json_encode($dataUrl); ?>;
@@ -163,6 +164,7 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
   const svg     = document.getElementById(svgId);
   const legend  = showLegend ? document.getElementById(legendId) : null;
   const tooltip = document.getElementById(tooltipId);
+  const deltaBadge = document.getElementById(baseId + "_delta");
 
   if (!svg || !tooltip || !dataUrl) return;
 
@@ -175,10 +177,72 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
     return ["1d", "1w", "1m"].includes(selected) ? selected : "1d";
   }
 
-  function buildDataUrlWithRange(baseUrl) {
+  function buildDataUrl(baseUrl, period) {
     const url = new URL(baseUrl, window.location.href);
     url.searchParams.set("range", getCurrentRange());
+    url.searchParams.set("period", period || "current");
     return url.toString();
+  }
+
+  function setDeltaBadgeText(text, className) {
+    if (!deltaBadge) return;
+    deltaBadge.textContent = text;
+    deltaBadge.classList.remove("delta-up", "delta-down", "delta-flat");
+    deltaBadge.classList.add(className);
+  }
+
+  function getLastNumericValue(items) {
+    for (let i = items.length - 1; i >= 0; i--) {
+      const value = Number(items[i] && items[i].value);
+      if (!Number.isNaN(value)) return value;
+    }
+    return null;
+  }
+
+  function updateDeltaBadge(currentItems, previousItems) {
+    if (!deltaBadge) return;
+
+    const currentLast = getLastNumericValue(currentItems || []);
+    const previousLast = getLastNumericValue(previousItems || []);
+
+    if (currentLast === null || previousLast === null) {
+      setDeltaBadgeText("Δ s/comp", "delta-flat");
+      return;
+    }
+
+    if (previousLast === 0) {
+      if (currentLast === 0) {
+        setDeltaBadgeText("Δ 0.0%", "delta-flat");
+      } else {
+        setDeltaBadgeText("Δ n/a", "delta-flat");
+      }
+      return;
+    }
+
+    const deltaPct = ((currentLast - previousLast) / Math.abs(previousLast)) * 100;
+    if (deltaPct > 0.05) {
+      setDeltaBadgeText("Δ ↑ " + Math.abs(deltaPct).toFixed(1) + "%", "delta-up");
+    } else if (deltaPct < -0.05) {
+      setDeltaBadgeText("Δ ↓ " + Math.abs(deltaPct).toFixed(1) + "%", "delta-down");
+    } else {
+      setDeltaBadgeText("Δ 0.0%", "delta-flat");
+    }
+  }
+
+  function mapRawRows(raw) {
+    return raw.map(function (row, idx) {
+      const keys = Object.keys(row || {});
+      const valueKey = keys.find(k => k !== "date");
+      const value = valueKey ? Number(row[valueKey]) : 0;
+
+      let label = "";
+      if (row.date) {
+        label = formatLabelByRange(row.date);
+      }
+      if (!label) label = "Item " + (idx + 1);
+
+      return { label, value, color: palette[idx % palette.length] };
+    });
   }
 
   function formatLabelByRange(rawDate) {
@@ -479,26 +543,23 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
       const headers = {};
       if (auth) headers["Authorization"] = "Basic " + auth;
 
-      const requestUrl = buildDataUrlWithRange(dataUrl);
-      const res = await fetch(requestUrl, { headers, cache: "no-store" });
-      if (!res.ok) return;
+      const currentUrl = buildDataUrl(dataUrl, "current");
+      const previousUrl = buildDataUrl(dataUrl, "previous");
 
-      const raw = await res.json();
+      const [currentRes, previousRes] = await Promise.all([
+        fetch(currentUrl, { headers, cache: "no-store" }),
+        fetch(previousUrl, { headers, cache: "no-store" })
+      ]);
+
+      if (!currentRes.ok) return;
+
+      const raw = await currentRes.json();
+      const previousRaw = previousRes.ok ? await previousRes.json() : [];
 
       if (Array.isArray(raw)) {
-        const formatted = raw.map(function (row, idx) {
-          const keys = Object.keys(row || {});
-          const valueKey = keys.find(k => k !== "date");
-          const value = valueKey ? Number(row[valueKey]) : 0;
-
-          let label = "";
-          if (row.date) {
-            label = formatLabelByRange(row.date);
-          }
-          if (!label) label = "Item " + (idx + 1);
-
-          return { label, value, color: palette[idx % palette.length] };
-        });
+        const formatted = mapRawRows(raw);
+        const previousFormatted = Array.isArray(previousRaw) ? mapRawRows(previousRaw) : [];
+        updateDeltaBadge(formatted, previousFormatted);
 
         if (!lastRawData) {
           lastRawData = formatted;
@@ -509,6 +570,7 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
         }
       } else if (raw && typeof raw === "object" && raw.error) {
         clearChart();
+        setDeltaBadgeText("Δ s/comp", "delta-flat");
         if (legend) {
           const msg = document.createElement("div");
           msg.textContent = raw.error;
@@ -516,6 +578,7 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
         }
       }
     } catch (e) {
+      setDeltaBadgeText("Δ s/comp", "delta-flat");
       // Silencioso en UI
     }
   }
