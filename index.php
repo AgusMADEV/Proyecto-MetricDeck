@@ -7,7 +7,7 @@
 
   <style>
     :root{
-      /* Paleta (la tuya) */
+      /* Paleta */
       --bg: #F3F3F1;
       --card: #E2DFD7;
       --border: #DAC7DC;
@@ -18,11 +18,13 @@
       --text: #1f2933;
       --muted: #6b7280;
 
-      --gap: 12px;
-      --radius: 16px;
+      --gap: 16px;
+      --radius: 12px;
     }
 
     * { box-sizing: border-box; }
+    
+    html { scroll-behavior: smooth; }
 
     body{
       margin:0;
@@ -30,6 +32,9 @@
       background: var(--bg);
       color: var(--text);
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     /* Topbar */
@@ -37,174 +42,196 @@
       position: sticky;
       top: 0;
       z-index: 20;
-      backdrop-filter: blur(10px);
-      background: rgba(243,243,241,.82);
-      border-bottom: 1px solid rgba(218,199,220,.75);
+      backdrop-filter: blur(12px) saturate(180%);
+      background: rgba(243,243,241,.90);
+      border-bottom: 1px solid rgba(218,199,220,.4);
+      box-shadow: 0 1px 0 0 rgba(255,255,255,.5);
     }
     .topbar-inner{
-      padding: 14px 14px;
+      padding: 18px 20px;
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap: 12px;
+      gap: 16px;
       margin: 0;
+      max-width: 1600px;
+      margin: 0 auto;
     }
 
     .brand{
       display:flex;
       align-items:center;
-      gap: 10px;
+      gap: 12px;
       min-width: 220px;
     }
     .brand-mark{
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
       background:
-        radial-gradient(circle at 30% 25%, rgba(237,93,95,.60), transparent 55%),
-        radial-gradient(circle at 70% 75%, rgba(229,144,181,.55), transparent 55%),
-        linear-gradient(135deg, rgba(218,199,220,.7), rgba(226,223,215,.85));
-      border: 1px solid rgba(218,199,220,.95);
-      box-shadow: 0 8px 20px rgba(0,0,0,.08);
+        radial-gradient(circle at 30% 25%, rgba(237,93,95,.45), transparent 60%),
+        radial-gradient(circle at 70% 75%, rgba(229,144,181,.40), transparent 60%),
+        linear-gradient(135deg, rgba(218,199,220,.5), rgba(226,223,215,.7));
+      border: 1px solid rgba(218,199,220,.6);
+      box-shadow: 0 2px 8px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.3);
     }
     .brand-title{
-      line-height: 1.05;
+      line-height: 1.3;
     }
     .brand-title strong{
       display:block;
-      font-size: 14px;
-      letter-spacing: .02em;
+      font-size: 15px;
+      letter-spacing: -.01em;
+      font-weight: 600;
+      color: var(--text);
     }
     .brand-title span{
       display:block;
-      margin-top: 2px;
+      margin-top: 1px;
       font-size: 12px;
-      color: var(--muted);
+      color: #52606D;
+      font-weight: 400;
     }
 
     .topbar-right{
       display:flex;
       align-items:center;
-      gap: 10px;
+      gap: 12px;
+      flex-wrap: wrap;
     }
     .pill{
       display:inline-flex;
       align-items:center;
       gap: 8px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: rgba(226,223,215,.65);
-      border: 1px solid rgba(218,199,220,.90);
-      color: var(--muted);
+      padding: 7px 12px;
+      border-radius: 8px;
+      background: rgba(226,223,215,.45);
+      border: 1px solid rgba(218,199,220,.5);
+      color: var(--text);
       font-size: 12px;
+      font-weight: 500;
       white-space: nowrap;
+      cursor: default;
+      user-select: none;
     }
     .pill-select{
       appearance: none;
-      border: 1px solid rgba(218,199,220,.90);
-      background: rgba(243,243,241,.9);
+      border: 1px solid rgba(218,199,220,.5);
+      background: rgba(255,255,255,.6);
       color: var(--text);
-      border-radius: 999px;
-      padding: 6px 10px;
+      border-radius: 6px;
+      padding: 5px 10px;
       font-size: 12px;
+      font-weight: 500;
       outline: none;
       cursor: pointer;
+      transition: all .15s ease;
+      min-height: 32px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pill-select:hover{
+      background: rgba(255,255,255,.8);
+      border-color: rgba(218,199,220,.7);
+    }
+    .pill-select:active{
+      transform: scale(0.98);
     }
     .pill-select:focus{
       border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(229,144,181,.2);
+    }
+    .pill-select:focus-visible{
+      outline: 2px solid var(--accent2);
+      outline-offset: 2px;
     }
     .dot{
-      width: 9px;
-      height: 9px;
+      width: 7px;
+      height: 7px;
       border-radius: 99px;
       background: var(--accent);
-      box-shadow: 0 0 0 4px rgba(237,93,95,.14);
+      box-shadow: 0 0 0 3px rgba(237,93,95,.15);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .6; }
     }
 
     /* Wrapper */
     .wrap{
       min-height:100vh;
-      margin: 0;
-      padding: 14px;
+      margin: 0 auto;
+      padding: 20px;
+      max-width: 1600px;
     }
 
     .headline{
       display:flex;
       align-items:flex-end;
       justify-content:space-between;
-      gap: 14px;
-      padding: 10px 0 6px;
+      gap: 20px;
+      padding: 16px 0 12px;
     }
     .headline h1{
       margin: 0;
-      font-size: 20px;
-      letter-spacing: .01em;
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      color: var(--text);
     }
     .headline p{
-      margin: 6px 0 0;
+      margin: 8px 0 0;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 14px;
+      line-height: 1.5;
       max-width: 70ch;
     }
 
-    /* ✅ Grid ORIGINAL (denso y libre) */
+    /* Grid con más respiro */
     .grid{
       display:grid;
       grid-template-columns: repeat(5, 1fr);
       grid-auto-rows: 220px;
       grid-auto-flow: dense;
       gap: var(--gap);
-      padding: 10px 0 24px;
+      padding: 12px 0 32px;
     }
 
-    /* Cards */
+    /* Cards minimalistas */
     .card{
       position: relative;
       background: var(--card);
       border-radius: var(--radius);
-      border: 1px solid rgba(218,199,220,.95);
-      box-shadow: 0 10px 26px rgba(0,0,0,.10);
+      border: 1px solid rgba(218,199,220,.5);
+      box-shadow: 0 2px 8px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.06);
       overflow:hidden;
       isolation:isolate;
-      transition: transform .18s ease, box-shadow .18s ease;
+      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Cinematic texture */
+    /* Textura sutil y minimalista */
     .card::before{
       content:"";
       position:absolute;
       inset:0;
       background:
-        radial-gradient(circle at 20% 15%, rgba(237,93,95,.10), transparent 58%),
-        radial-gradient(circle at 80% 80%, rgba(229,144,181,.10), transparent 58%);
+        radial-gradient(circle at 25% 20%, rgba(237,93,95,.04), transparent 65%),
+        radial-gradient(circle at 75% 80%, rgba(229,144,181,.04), transparent 65%);
       pointer-events:none;
-      opacity:.9;
-      mix-blend-mode:multiply;
-    }
-    .card::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        repeating-linear-gradient(
-          135deg,
-          rgba(31,41,51,.04) 0 1px,
-          transparent 1px 6px
-        );
-      opacity:.22;
-      pointer-events:none;
+      opacity:1;
     }
 
     .card:hover{
-      transform: translateY(-1px);
-      box-shadow: 0 16px 34px rgba(0,0,0,.14);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.06);
+      border-color: rgba(218,199,220,.7);
     }
 
     .card-header{
       position:absolute;
-      top: 12px;
-      left: 12px;
-      right: 12px;
+      top: 14px;
+      left: 14px;
+      right: 14px;
       display:flex;
       align-items:center;
       justify-content:space-between;
@@ -216,57 +243,67 @@
     .label{
       display:inline-flex;
       align-items:center;
-      gap: 8px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      letter-spacing: .14em;
+      gap: 7px;
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 10px;
+      letter-spacing: .12em;
       text-transform: uppercase;
-      color: rgba(31,41,51,.78);
-      background: rgba(243,243,241,.74);
-      border: 1px solid rgba(218,199,220,.95);
-      backdrop-filter: blur(6px);
+      font-weight: 600;
+      color: var(--text);
+      background: rgba(243,243,241,.85);
+      border: 1px solid rgba(218,199,220,.5);
+      backdrop-filter: blur(8px);
+      user-select: none;
+      -webkit-user-select: none;
     }
     .label .mini{
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       border-radius: 99px;
       background: var(--accent2);
-      box-shadow: 0 0 0 4px rgba(229,144,181,.16);
+      box-shadow: 0 0 0 2px rgba(229,144,181,.15);
     }
 
     .meta{
       display:flex;
       align-items:center;
-      gap: 8px;
-      font-size: 12px;
+      gap: 7px;
+      font-size: 11px;
       color: var(--muted);
     }
     .meta b{
-      color: rgba(31,41,51,.85);
+      color: var(--text);
       font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    @media(max-width: 600px){
+      .meta b{ display: none; }
     }
     .delta-badge{
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(218,199,220,.95);
-      background: rgba(243,243,241,.74);
-      color: var(--muted);
-      font-size: 11px;
+      padding: 4px 7px;
+      border-radius: 6px;
+      border: 1px solid rgba(218,199,220,.4);
+      background: rgba(243,243,241,.7);
+      color: #52606D;
+      font-size: 10px;
+      font-weight: 600;
       line-height: 1;
     }
     .delta-up{
-      color: var(--accent2);
-      border-color: rgba(229,144,181,.35);
-      background: rgba(229,144,181,.16);
+      color: #C7548C;
+      border-color: rgba(229,144,181,.4);
+      background: rgba(229,144,181,.15);
     }
     .delta-down{
-      color: var(--accent);
-      border-color: rgba(237,93,95,.35);
-      background: rgba(237,93,95,.16);
+      color: #D84547;
+      border-color: rgba(237,93,95,.4);
+      background: rgba(237,93,95,.15);
     }
     .delta-flat{
-      color: var(--muted);
+      color: #52606D;
     }
 
     .card-body{
@@ -274,20 +311,112 @@
       z-index: 1;
       width:100%;
       height:100%;
-      padding: 48px 10px 10px; /* espacio para la etiqueta */
+      padding: 50px 12px 12px;
       display:flex;
       align-items:center;
       justify-content:center;
     }
 
+    /* Estados de carga */
+    .card.loading::after{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(243,243,241,.6);
+      backdrop-filter: blur(2px);
+      z-index: 10;
+      animation: fadeIn .3s ease;
+    }
+    
+    /* Skeleton loader */
+    .card-body.skeleton{
+      position: relative;
+      overflow: hidden;
+    }
+    .card-body.skeleton::before{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(218,199,220,.2) 50%,
+        transparent 100%
+      );
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Mejoras de accesibilidad */
+    *:focus-visible {
+      outline: 2px solid var(--accent2);
+      outline-offset: 2px;
+    }
+    
+    /* Reducir animaciones si el usuario lo prefiere */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+
     /* Responsive */
+    @media(max-width: 1200px){
+      .grid{ grid-template-columns: repeat(3, 1fr); }
+    }
     @media(max-width: 1000px){
       .grid{ grid-template-columns: repeat(2, 1fr); }
+      .wrap{ padding: 16px; }
     }
     @media(max-width: 600px){
-      .grid{ grid-template-columns: 1fr; }
-      .topbar-inner{ flex-direction: column; align-items:flex-start; }
-      .headline{ flex-direction: column; align-items:flex-start; }
+      .grid{ 
+        grid-template-columns: 1fr; 
+        grid-auto-rows: 260px;
+      }
+      .topbar-inner{ 
+        padding: 14px 16px;
+      }
+      .topbar-right{
+        width: 100%;
+        justify-content: flex-start;
+      }
+      .headline{ 
+        flex-direction: column; 
+        align-items:flex-start;
+        padding: 12px 0 8px;
+      }
+      .headline h1{
+        font-size: 22px;
+      }
+      .headline p{
+        font-size: 13px;
+      }
+      .wrap{ padding: 12px; }
+      .card-header{
+        top: 12px;
+        left: 12px;
+        right: 12px;
+      }
+      .pill{
+        font-size: 11px;
+        padding: 6px 10px;
+        min-height: 36px;
+      }
+      .pill-select{
+        min-height: 40px;
+        padding: 8px 12px;
+      }
     }
   </style>
 </head>
@@ -304,8 +433,12 @@
       </div>
 
       <div class="topbar-right">
-        <div class="pill"><span class="dot"></span> Live</div>
-        <div class="pill">Auto-refresh: <b>10s</b></div>
+        <div class="pill" role="status" aria-live="polite" aria-label="Estado del servidor">
+          <span class="dot"></span> Live
+        </div>
+        <div class="pill" aria-label="Tiempo de actualización automática">
+          Auto-refresh: <b>10s</b>
+        </div>
         <div class="pill">
           Rango:
           <select id="timeRangeSelect" class="pill-select" aria-label="Seleccionar rango de tiempo">
@@ -319,7 +452,7 @@
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="wrap" role="main">
     <section class="headline">
       <div>
         <h1>Panel de métricas</h1>
@@ -327,7 +460,7 @@
       </div>
     </section>
 
-    <section class="grid">
+    <section class="grid" role="region" aria-label="Gráficos de monitoreo">
       <?php
         $endpoints = [
           ['endpoint' => 'cpu', 'type' => 'line', 'label' => 'CPU'],
@@ -369,10 +502,12 @@
           $size = $sizes[array_rand($sizes)];
 
           echo '<article class="card"
-              style="grid-column: span ' . $size['c'] . '; grid-row: span ' . $size['r'] . ';">
+              style="grid-column: span ' . $size['c'] . '; grid-row: span ' . $size['r'] . ';"
+              role="article"
+              aria-label="Gráfico de ' . htmlspecialchars($endpoint["label"]) . '">
                 <div class="card-header">
                   <div class="label"><span class="mini"></span>' . htmlspecialchars($endpoint["label"]) . '</div>
-                  <div class="meta"><b>' . htmlspecialchars($endpoint["type"]) . '</b><span id="chart_' . $index . '_delta" class="delta-badge delta-flat">Δ --</span></div>
+                  <div class="meta"><b>' . htmlspecialchars($endpoint["type"]) . '</b><span id="chart_' . $index . '_delta" class="delta-badge delta-flat" aria-live="polite">—</span></div>
                 </div>
                 <div class="card-body">';
 

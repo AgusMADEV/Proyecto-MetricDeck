@@ -94,18 +94,27 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
     .md-tooltip{
       position: fixed;
       pointer-events: none;
-      padding: 8px 10px;
-      background: rgba(243,243,241,.96);
-      color: rgba(31,41,51,.92);
-      border-radius: 10px;
-      font-size: 12px;
-      transform: translate(-50%, -130%);
+      padding: 10px 14px;
+      background: rgba(31,41,51,.96);
+      color: rgba(243,243,241,.98);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
       white-space: nowrap;
-      display: none;
-      z-index: 9999;
-      border: 1px solid rgba(218,199,220,.95);
-      box-shadow: 0 14px 30px rgba(0,0,0,.18);
-      backdrop-filter: blur(10px);
+      z-index: 10000;
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 8px 24px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.16);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      transition: opacity .15s ease;
+      will-change: opacity, left, top;
+      /* Start hidden */
+      visibility: hidden;
+    }
+    
+    .md-tooltip.visible{
+      opacity: 1;
+      visibility: visible;
     }
 
     .md-grid line{
@@ -121,17 +130,42 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
 
     .md-slice, .md-bar, .md-point{
       cursor: pointer;
-      transition: transform .16s ease, opacity .16s ease, filter .16s ease;
+      transition: transform .2s cubic-bezier(0.4, 0, 0.2, 1), 
+                  opacity .2s ease, 
+                  filter .2s ease,
+                  stroke-width .2s ease;
       transform-box: fill-box;
       transform-origin: 50% 50%;
     }
-    .md-slice:hover, .md-bar:hover, .md-point:hover{
-      transform: scale(1.03);
-      opacity: .92;
-      filter: saturate(1.05);
+    .md-slice:hover, .md-bar:hover{
+      transform: scale(1.05);
+      opacity: .88;
+      filter: brightness(1.08) saturate(1.1);
+    }
+    .md-point:hover{
+      transform: scale(1.5);
+      filter: brightness(1.15) saturate(1.15);
+    }
+    .md-slice:active, .md-bar:active, .md-point:active{
+      transform: scale(0.98);
     }
 
-    .md-line{ opacity: .96; }
+    .md-line{ 
+      opacity: .92; 
+      transition: stroke-width .2s ease, opacity .2s ease;
+    }
+    
+    .md-point-focus{
+      filter: drop-shadow(0 0 8px rgba(237,93,95,.5));
+    }
+    
+    /* Mejora para touch devices */
+    @media (hover: none) {
+      .md-slice, .md-bar, .md-point{
+        min-width: 44px;
+        min-height: 44px;
+      }
+    }
   </style>';
 }
 ?>
@@ -146,9 +180,10 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
   <?php if ($showLegend): ?>
     <div id="<?php echo htmlspecialchars($legendId, ENT_QUOTES); ?>" class="md-legend" aria-label="Legend"></div>
   <?php endif; ?>
-
-  <div id="<?php echo htmlspecialchars($tooltipId, ENT_QUOTES); ?>" class="md-tooltip"></div>
 </div>
+
+<!-- Tooltip fuera del contenedor para que no sea recortado -->
+<div id="<?php echo htmlspecialchars($tooltipId, ENT_QUOTES); ?>" class="md-tooltip"></div>
 
 <script>
 (function () {
@@ -167,6 +202,10 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
   const deltaBadge = document.getElementById(baseId + "_delta");
 
   if (!svg || !tooltip || !dataUrl) return;
+
+  // Mover el tooltip al body para evitar problemas de overflow
+  document.body.appendChild(tooltip);
+  console.log("Tooltip moved to body:", tooltip); // DEBUG
 
   // MetricDeck palette (tus colores)
   const palette = ["#ED5D5F", "#E590B5", "#DAC7DC", "#E2DFD7"];
@@ -272,26 +311,96 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
   }
 
   function showTooltip(text, x, y) {
+    if (!tooltip) return;
+    
+    console.log("Showing tooltip:", text, "at", x, y); // DEBUG
+    
     tooltip.textContent = text;
-    tooltip.style.left = x + "px";
-    tooltip.style.top  = y + "px";
-    tooltip.style.display = "block";
+    tooltip.classList.add("visible");
+    
+    // Pequeño delay para medir después de que el contenido se actualice
+    requestAnimationFrame(function() {
+      const rect = tooltip.getBoundingClientRect();
+      const offsetX = 10;
+      const offsetY = 10;
+      
+      // Calcular posición inicial (arriba derecha del cursor)
+      let left = x + offsetX;
+      let top = y - rect.height - offsetY;
+      
+      // Ajustar si se sale por la derecha
+      if (left + rect.width > window.innerWidth - 10) {
+        left = x - rect.width - offsetX;
+      }
+      
+      // Ajustar si se sale por arriba
+      if (top < 10) {
+        top = y + offsetY;
+      }
+      
+      // Ajustar si se sale por la izquierda
+      if (left < 10) {
+        left = 10;
+      }
+      
+      tooltip.style.left = left + "px";
+      tooltip.style.top = top + "px";
+      
+      console.log("Tooltip positioned at:", left, top, "opacity:", window.getComputedStyle(tooltip).opacity); // DEBUG
+    });
   }
+  
   function hideTooltip() {
-    tooltip.style.display = "none";
+    if (!tooltip) return;
+    tooltip.classList.remove("visible");
   }
 
   function attachTooltip(el, label, value, extraText) {
-    if (!el) return;
+    if (!el || !tooltip) return;
+    
     el.addEventListener("mouseenter", function (evt) {
       const text = (label || "(sin etiqueta)") + ": " + value.toFixed(1) + (extraText ? (" " + extraText) : "");
-      showTooltip(text, evt.clientX, evt.clientY - 10);
+      showTooltip(text, evt.clientX, evt.clientY);
     });
+    
     el.addEventListener("mousemove", function (evt) {
-      tooltip.style.left = evt.clientX + "px";
-      tooltip.style.top  = (evt.clientY - 10) + "px";
+      if (!tooltip.classList.contains("visible")) return;
+      
+      const rect = tooltip.getBoundingClientRect();
+      const offsetX = 10;
+      const offsetY = 10;
+      
+      let left = evt.clientX + offsetX;
+      let top = evt.clientY - rect.height - offsetY;
+      
+      // Ajustar límites
+      if (left + rect.width > window.innerWidth - 10) {
+        left = evt.clientX - rect.width - offsetX;
+      }
+      if (top < 10) {
+        top = evt.clientY + offsetY;
+      }
+      if (left < 10) {
+        left = 10;
+      }
+      
+      tooltip.style.left = left + "px";
+      tooltip.style.top = top + "px";
     });
+    
     el.addEventListener("mouseleave", hideTooltip);
+    
+    // Touch support para móviles
+    el.addEventListener("touchstart", function (evt) {
+      evt.preventDefault();
+      const touch = evt.touches[0];
+      const text = (label || "(sin etiqueta)") + ": " + value.toFixed(1) + (extraText ? (" " + extraText) : "");
+      showTooltip(text, touch.clientX, touch.clientY);
+    });
+    
+    el.addEventListener("touchend", function () {
+      setTimeout(hideTooltip, 1500);
+    });
   }
 
   function polarToCartesian(cx, cy, r, angleRad) {
@@ -416,9 +525,9 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
       rect.setAttribute("y", y);
       rect.setAttribute("width", barW);
       rect.setAttribute("height", Math.max(0, barH));
-      rect.setAttribute("rx", 8);
+      rect.setAttribute("rx", 6);
       rect.setAttribute("fill", item.color);
-      rect.setAttribute("opacity", "0.95");
+      rect.setAttribute("opacity", "0.92");
       rect.classList.add("md-bar");
 
       attachTooltip(rect, item.label, v, "");
@@ -463,7 +572,7 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
     polyline.setAttribute("points", pts.trim());
     polyline.setAttribute("fill", "none");
     polyline.setAttribute("stroke", lineColor);
-    polyline.setAttribute("stroke-width", 2.2);
+    polyline.setAttribute("stroke-width", 2.8);
     polyline.setAttribute("stroke-linejoin", "round");
     polyline.setAttribute("stroke-linecap", "round");
     polyline.classList.add("md-line");
@@ -476,10 +585,10 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
       const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       c.setAttribute("cx", x);
       c.setAttribute("cy", y);
-      c.setAttribute("r", 4.2);
+      c.setAttribute("r", 5);
       c.setAttribute("fill", item.color);
       c.setAttribute("stroke", "rgba(243,243,241,.95)");
-      c.setAttribute("stroke-width", "1.2");
+      c.setAttribute("stroke-width", "2");
       c.classList.add("md-point");
 
       attachTooltip(c, item.label, item.value, "");
