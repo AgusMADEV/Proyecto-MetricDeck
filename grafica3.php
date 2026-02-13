@@ -174,7 +174,7 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
 
   function getCurrentRange() {
     const selected = typeof window.metricDeckTimeRange === "string" ? window.metricDeckTimeRange : "1d";
-    return ["1d", "1w", "1m"].includes(selected) ? selected : "1d";
+    return ["1h", "1d", "1w", "1m"].includes(selected) ? selected : "1d";
   }
 
   function buildDataUrl(baseUrl, period) {
@@ -250,6 +250,10 @@ if (!defined('METRICDECK_SVG_CSS_PRINTED')) {
     if (Number.isNaN(d.getTime())) return String(rawDate);
 
     const range = getCurrentRange();
+    if (range === "1h") {
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    }
+
     if (range === "1d") {
       return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }

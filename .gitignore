@@ -6,3 +6,4 @@ auth_config.php
 /monitor_data
 *.csv
 random_monitor.py
+/monitor_data

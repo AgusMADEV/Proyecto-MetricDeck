@@ -49,6 +49,8 @@ $csvDir = 'monitor_data';
 
 function resolveRangeInSeconds($range) {
     switch ($range) {
+        case '1h':
+            return 3600;
         case '1d':
             return 86400;
         case '1w':

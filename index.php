@@ -309,6 +309,7 @@
         <div class="pill">
           Rango:
           <select id="timeRangeSelect" class="pill-select" aria-label="Seleccionar rango de tiempo">
+            <option value="1h">1 hora</option>
             <option value="1d">1 día</option>
             <option value="1w">1 semana</option>
             <option value="1m">1 mes</option>
@@ -390,7 +391,7 @@
       if (!selector) return;
 
       const storageKey = "metricdeck_time_range";
-      const validRanges = new Set(["1d", "1w", "1m"]);
+      const validRanges = new Set(["1h", "1d", "1w", "1m"]);
       const savedRange = localStorage.getItem(storageKey);
       const initialRange = validRanges.has(savedRange) ? savedRange : "1d";
 
