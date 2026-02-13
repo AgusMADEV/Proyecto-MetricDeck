@@ -295,9 +295,9 @@
 
         $apiBaseUrl = 'api.php?endpoint=';
 
-        // Mantengo tu auth actual (aunque luego te recomiendo moverla a Apache Basic Auth)
-        $username = 'jocarsa';
-        $password = 'jocarsa';
+        $authConfig = require __DIR__ . '/auth_config.php';
+        $username = (string)($authConfig['username'] ?? '');
+        $password = (string)($authConfig['password'] ?? '');
 
         // Tamaños (como tu versión original, pero “controlados”)
         $sizes = [

@@ -1,13 +1,39 @@
 <?php
 // api.php
-$username = 'username'; // Change this
-$password = 'password'; // Change this
+$authConfig = require __DIR__ . '/auth_config.php';
+$username = (string)($authConfig['username'] ?? '');
+$password = (string)($authConfig['password'] ?? '');
+
+function getBasicAuthCredentials() {
+    if (isset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'])) {
+        return [$_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']];
+    }
+
+    $header = '';
+    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $header = (string)$_SERVER['HTTP_AUTHORIZATION'];
+    } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $header = (string)$_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    }
+
+    if (stripos($header, 'Basic ') === 0) {
+        $decoded = base64_decode(substr($header, 6), true);
+        if ($decoded !== false) {
+            $parts = explode(':', $decoded, 2);
+            if (count($parts) === 2) {
+                return [$parts[0], $parts[1]];
+            }
+        }
+    }
+
+    return [null, null];
+}
+
+[$providedUser, $providedPassword] = getBasicAuthCredentials();
 
 // Check for valid credentials
-if (!isset($_SERVER['PHP_AUTH_USER']) ||
-    !isset($_SERVER['PHP_AUTH_PW']) ||
-    $_SERVER['PHP_AUTH_USER'] != $username ||
-    $_SERVER['PHP_AUTH_PW'] != $password) {
+if ($providedUser !== $username ||
+    $providedPassword !== $password) {
     header('WWW-Authenticate: Basic realm="Restricted Area"');
     header('HTTP/1.0 401 Unauthorized');
     die('Authentication required.');

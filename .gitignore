@@ -1,2 +1,3 @@
 .env
 monitor_data/
+auth_config.php
