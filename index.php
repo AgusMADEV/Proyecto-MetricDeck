@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MetricDeck</title>
+  <link rel="icon" type="image/png" href="logo_azul.png">
+  <link rel="apple-touch-icon" href="logo_azul.png">
 
   <style>
     :root{
