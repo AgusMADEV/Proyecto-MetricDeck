@@ -11,3 +11,7 @@ random_monitor.py
 /monitor_data
 /monitor_data
 Respuesta.md
+/monitor_data
+monitor_data/disk_usage.csv
+monitor_data/cpu_usage.csv
+auth_config-example.php

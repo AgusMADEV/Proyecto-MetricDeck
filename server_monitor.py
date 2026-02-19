@@ -12,8 +12,17 @@ CSV_DIR = os.path.join(BASE_DIR, "monitor_data")
 os.makedirs(CSV_DIR, exist_ok=True)
 
 # --- Helper Functions ---
+def sanitize_filename(filename):
+    """Remove or replace invalid characters for Windows filenames."""
+    # Invalid characters in Windows: < > : " / \ | ? *
+    invalid_chars = '<>:"/\\|?*'
+    for char in invalid_chars:
+        filename = filename.replace(char, '_')
+    return filename
+
 def save_to_csv(filename, headers, data):
     """Saves data to CSV, creating headers if the file doesn't exist."""
+    filename = sanitize_filename(filename)
     filepath = os.path.join(CSV_DIR, filename)
     file_exists = os.path.isfile(filepath)
     with open(filepath, 'a', newline='') as f:
